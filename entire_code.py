@@ -219,6 +219,7 @@ while True:
         print(f'수심 : {H}, 최대 수심 : {max_depth}')
         break
 
+###### 추가 생성
 # 각 좌표와 해당 H 값을 저장할 객체 생성
 flooded_cells_with_H = {}
 
