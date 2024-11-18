@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from collections import deque
 
 # 데이터 불러오기
-shp_file_path = r"C:\Users\USER\Desktop\DEM_GRID\DEM_GRID.shp"
+shp_file_path = r"C:\Users\USER\PYTHON\Dijkstra\DEM_GRID\DEM_GRID.shp"
 gdf = gpd.read_file(shp_file_path)
 grid_data = gdf[['row_index', 'col_index', 'Elevation', 'Junction']]
 
