@@ -1,286 +1,226 @@
-# import geopandas as gpd
-# import networkx as nx
-# import matplotlib.pyplot as plt
-# import numpy as np
-# from entire_code import flooded_cells_with_H
-
-# # Shapefile 불러오기
-# dem_grid_path = r"C:\Users\USER\PYTHON\Dijkstra\DEM_GRID\DEM_GRID.shp"
-# geo_path = r"C:\Users\USER\PYTHON\Dijkstra\geo.shp"
-
-# gdf = gpd.read_file(dem_grid_path)
-# geo_data = gpd.read_file(geo_path)
-
-
-# # 도로인 셀 필터링
-# road_nodes = gdf[gdf['Type'] == '도로']
-
-# G = nx.Graph()
-
-# for _, row in road_nodes.iterrows():
-#     node_id = row['id']  # 'id' 컬럼에서 ID 가져오기
-#     col_index = row['col_index']
-#     row_index = row['row_index']
-#     G.add_node(node_id, pos=(col_index, row_index))  # 좌표를 (col_index, row_index)로 설정
-
-# # 간선 생성
-# for _, row in road_nodes.iterrows():
-#     current_node_id = row['id']
-#     current_col = row['col_index']
-#     current_row = row['row_index']
-    
-#     for _, neighbor_row in road_nodes.iterrows():
-#         if neighbor_row['id'] != current_node_id:
-#             neighbor_node_id = neighbor_row['id']
-#             neighbor_col_ = neighbor_row['col_index']
-#             neighbor_row_ = neighbor_row['row_index']
-            
-#             # 셀 간의 차이를 계산
-#             col_diff = abs(current_col - neighbor_col_)
-#             row_diff = abs(current_row - neighbor_row_)
-            
-#             weight=1 # 가중치 초기화
-
-#             # 상하좌우인지 대각선인지 확인
-#             if (col_diff == 1 and row_diff == 0) or (col_diff == 0 and row_diff == 1):
-#                 weight = 1  # 상하좌우
-#             elif col_diff == 1 and row_diff == 1:
-#                 weight = 1  # 대각선
-#             else: continue
-
-#             # 수심에 따른 가중치
-#             if(current_col, current_row) in flooded_cells_with_H:
-#                  H_value = flooded_cells_with_H[(current_col, current_row)]
-#                  if 0.4<=H_value<0.8:
-#                     weight = 2 * weight
-#                  elif 1.2<=H_value<1.6:
-#                     weight = 3 * weight
-#                  elif 1.6<=H_value<2:
-#                     weight = 4 * weight
-#                  elif 2<=H_value<2.4:
-#                     weight = 5 * weight
-#                  elif H_value >= 2.4:
-#                     weight += 999 
-
-#             # 간선 추가
-#             G.add_edge(current_node_id, neighbor_node_id, weight=weight)
-
-# # dijkstra 실행
-# source = road_nodes[road_nodes['id'] == 372]['id'].values[0]
-# target = road_nodes[road_nodes['id'] == 2323]['id'].values[0]
-# path = nx.dijkstra_path(G, source, target)
-
-# # print("최단경로: ", path)
-
-# # ## 시각화
-# # plt.figure(figsize=(10, 10))
-
-# # # 노드 위치 설정
-# # pos = nx.get_node_attributes(G, 'pos')
-
-# # # 전체 그래프 그리기 (노드 및 간선)
-# # nx.draw(G, pos, node_size=10, node_color='black', edge_color='gray', with_labels=False)
-
-# # # 최종 경로 그리기 (빨간색)
-# # nx.draw_networkx_edges(G, pos, edgelist=list(zip(path, path[1:])), edge_color='red', width=2)
-
-# # # 침수 지점 표시 (파란색 포인트)
-# # for (x, y), _ in flooded_cells_with_H.items():
-# #     for node_id, (px, py) in pos.items():
-# #          if abs(px - x) < 1e-2 and abs(py - y) < 1e-2:  # 비교 기준을 조정하여 좌표 매칭을 보장
-# #             plt.scatter(px, py, color='blue', s=20)  # 침수 지점 표시
-            
-
-
-# # # 노드 위치 설정
-# # pos = nx.get_node_attributes(G, 'pos')
-
-# # # # 그래프의 edge만 그리기 (회색)
-# # # nx.draw_networkx_edges(G, pos, edge_color='gray', width=0.5)
-
-# # # 최종 경로 그리기 (빨간색)
-# # nx.draw_networkx_edges(G, pos, edgelist=list(zip(path, path[1:])), edge_color='red', width=2)
-
-# # # 침수 지점 표시 (파란색 포인트)
-# # for (x, y), _ in flooded_cells_with_H.items():
-# #     for node_id, (px, py) in pos.items():
-# #         if abs(px - x) < 1e-2 and abs(py - y) < 1e-2:  # 비교 기준을 조정하여 좌표 매칭을 보장
-# #             plt.scatter(px, py, color='blue', s=20)  # 침수 지점 표시
-
-# # plt.gca().invert_yaxis()
-# # plt.title('Terrain and Buildings Visualization')
-# # plt.show()
-
-
-
-
-# # plt.title("도로 네트워크, 침수 지점 및 최종 경로 시각화")
-# # plt.xlabel("X Coordinate")
-# # plt.ylabel("Y Coordinate")
-
-# # plt.show()
-
-
-# from shapely.affinity import scale
-# import matplotlib.pyplot as plt
-# import networkx as nx
-
-# # geo_data의 경계 상자 가져오기
-# minx, miny, maxx, maxy = geo_data.total_bounds
-# #print(minx, miny, maxx, maxy)
-
-# # 64x64 그리드 크기 설정
-# grid_size = 64
-
-# # 좌표 변환 함수 정의
-# def transform_to_grid(geometry, minx, miny, maxx, maxy, grid_size):
-#     xfact = grid_size / (maxx - minx)
-#     yfact = grid_size / (maxy - miny)
-#     return scale(geometry, xfact=xfact, yfact=yfact, origin=(minx, miny))
-
-# # geo_data의 geometry 변환
-# geo_data['geometry'] = geo_data['geometry'].apply(lambda geom: transform_to_grid(geom, minx, miny, maxx, maxy, grid_size))
-# # print(geo_data.head())
-
-# print("Terrain bounds:", geo_data.total_bounds)
-# print("Raster bounds:", gdf.bounds)
-
-
-
-# # 시각화 설정
-# plt.figure(figsize=(10, 10))
-
-# # 지형과 건물 시각화 (변환된 좌표계)
-# terrain = geo_data[geo_data['type'] == '지형']
-# buildings = geo_data[geo_data['type'] == '건물']
-
-# terrain.plot(ax=plt.gca(), color='lightgray', edgecolor='none')
-# buildings.plot(ax=plt.gca(), color='lightgray', edgecolor='darkgray')
-
-# # 노드 위치 설정 (64x64 그리드)
-# pos = nx.get_node_attributes(G, 'pos')
-
-# # 그래프의 edge만 그리기
-# nx.draw_networkx_edges(G, pos, edge_color='gray', width=0.5)
-
-# # 침수 지점 표시 (64x64 그리드 좌표)
-# for (x, y), _ in flooded_cells_with_H.items():
-#     plt.scatter(x, y, color='blue', s=20)
-
-# plt.title('Aligned Coordinates Visualization')
-# plt.xlim(0, grid_size)
-# plt.ylim(0, grid_size)
-# plt.gca().invert_yaxis()  # y축 반전 (그리드의 좌표계가 위에서 아래로 내려가는 경우)
-
-# plt.show()
-
-
-
 import geopandas as gpd
+import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
-from entire_code import flooded_cells_with_H
+from entire_code_ import flooded_cells_with_H
+from collections import defaultdict
+import heapq
 
-# Shapefile 불러오기
+nodes_path = r"C:\Users\USER\PYTHON\Dijkstra\node_edge\node.shp"
+edges_path = r"C:\Users\USER\PYTHON\Dijkstra\node_edge\edges.shp"
 dem_grid_path = r"C:\Users\USER\PYTHON\Dijkstra\DEM_GRID\DEM_GRID.shp"
 geo_path = r"C:\Users\USER\PYTHON\Dijkstra\geo\geo.shp"
 
-gdf = gpd.read_file(dem_grid_path)
+nodes = gpd.read_file(nodes_path)
+edges = gpd.read_file(edges_path)
+dem_grid = gpd.read_file(dem_grid_path)
 geo_data = gpd.read_file(geo_path)
 
-# 도로인 셀 필터링
-road_nodes = gdf[gdf['Type'] == '도로']
+# dem_grid data -> cell_id: {flood_depth, edge_id} 구축
+# 동일한 cell_id를 기준으로 edge_id 병합
+filtered_dem_grid = (
+    dem_grid.groupby("cell_id")
+    .agg(
+        {
+            "edge_id": lambda x: [edge for edge in x if pd.notna(edge)],  # edge_id 병합, NaN 값 제거
+            "col_index": "first",
+            "row_index": "first",
+        }
+    )
+    .reset_index() # 병합된 cell_id와 인덱스 일치
+)
 
-G = nx.Graph()
+filtered_dem_grid_dict = {
+    row["cell_id"]: {
+        "col": int(row["col_index"]),
+        "row": int(row["row_index"]),
+        "edges_id": row["edge_id"]}
+    for _, row in filtered_dem_grid.iterrows()
+}
 
-# 노드 추가 (좌표는 (col_index, row_index) 형태로 저장)
-for _, row in road_nodes.iterrows():
-    node_id = row['id']
-    col_index = row['col_index']
-    row_index = row['row_index']
-    G.add_node(node_id, pos=(col_index, row_index))
+# 침수심과 매핑
+flooded_filtered_dem_grid = {}
+for cell_id, dem_info in filtered_dem_grid_dict.items():
+    col = dem_info["col"]
+    row = dem_info["row"]
+    edges_id = dem_info["edges_id"]
 
-# 간선 생성 및 가중치 계산
-for _, row in road_nodes.iterrows():
-    current_node_id = row['id']
-    current_col = row['col_index']
-    current_row = row['row_index']
+    for (cx, cy), flood_depth in flooded_cells_with_H.items():
+        if (col == cx) and (row == cy):
+            flooded_filtered_dem_grid[cell_id] = {
+                "flood_depth": float(flood_depth),
+                "edges_id": [edges_id] if isinstance(edges_id, str) else edges_id,
+                "col": col, "row": row
+            }
+
+# GeoDataFrame을 리스트로 변환
+edges_list = edges.to_dict(orient="records")
+
+# 다른 셀을 가진 동일한 간선끼리 결합
+merged_edges = defaultdict(lambda: {"node_1": None, "node_2": None, "length": None, "cells": []})
+for edge in edges_list:
+    edge_id = edge["edge_id"]
+    if merged_edges[edge_id]["node_1"] is None: # node_1, node_2, length는 첫 번째 값으로 고정
+        merged_edges[edge_id]["node_1"] = edge["node_1"]
+        merged_edges[edge_id]["node_2"] = edge["node_2"]
+        merged_edges[edge_id]["length"] = edge["length"]
+    merged_edges[edge_id]["cells"].append(edge["cell_id"])
+
+merged_edges_dict = dict(merged_edges)
+
+def calculate_weight(flood_depth):
+    if flood_depth is None:
+        return 1
+    elif 0.0 < flood_depth < 0.2:
+        return 2
+    elif 0.2 <= flood_depth < 0.3:
+        return 3
+    elif 0.3 <= flood_depth < 0.5:
+        return 4
+    elif flood_depth >= 0.5:
+        return 100
+    else: return 1
+
+def calculate_edge_weight(edge_cells, dem_grid):
+    total_weight = 0
+    flood_depth_list = []
+    # 간선과 dem_grid의 셀이 일치하는 부분의 침수심 리스트
+    for cell_id in edge_cells:
+        flood_depth = dem_grid[cell_id]['flood_depth']
+        flood_depth_list.append(flood_depth)
     
-    for _, neighbor_row in road_nodes.iterrows():
-        if neighbor_row['id'] != current_node_id:
-            neighbor_node_id = neighbor_row['id']
-            neighbor_col_ = neighbor_row['col_index']
-            neighbor_row_ = neighbor_row['row_index']
-            
-            col_diff = abs(current_col - neighbor_col_)
-            row_diff = abs(current_row - neighbor_row_)
-            
-            weight = 1  # 기본 가중치 설정
+    if flood_depth_list:
+        depth_max = max(flood_depth_list)
+    else:
+        depth_max = 0
+    
+    weight = calculate_weight(depth_max)
+    if weight is not None:
+        total_weight += weight
 
-            if (col_diff == 1 and row_diff == 0) or (col_diff == 0 and row_diff == 1):
-                weight = 1  # 상하좌우
-            elif col_diff == 1 and row_diff == 1:
-                weight = 1  # 대각선
-            else:
-                continue
+    return total_weight
 
-            if (current_col, current_row) in flooded_cells_with_H:
-                H_value = flooded_cells_with_H[(current_col, current_row)]
-                if 0.4 <= H_value < 0.8:
-                    weight = 2 * weight
-                elif 1.2 <= H_value < 1.6:
-                    weight = 3 * weight
-                elif 1.6 <= H_value < 2:
-                    weight = 4 * weight
-                elif 2 <= H_value < 2.4:
-                    weight = 5 * weight
-                elif H_value >= 2.4:
-                    weight += 999
+def build_graph(edges, dem_grid):
+    graph = {}
+    for edge_id, edge_data  in edges.items():
+        start, end = edge_data['node_1'], edge_data['node_2']
+        length = edge_data['length']
+        edge_cells = edge_data['cells']
+        weight = length
+        weight = calculate_edge_weight(edge_cells, dem_grid) * length
 
-            G.add_edge(current_node_id, neighbor_node_id, weight=weight)
+        if start not in graph:
+            graph[start] = []
+        if end not in graph:
+            graph[end] = []
 
-# 다익스트라 경로 탐색
-source = road_nodes[road_nodes['id'] == 372]['id'].values[0]
-target = road_nodes[road_nodes['id'] == 2323]['id'].values[0]
-path = nx.dijkstra_path(G, source, target)
+        graph[start].append((end, weight))
+        graph[end].append((start, weight)) # 양방향
 
-# 지도 좌표 변환 함수
-affine_transform = (np.min(gdf.geometry.bounds.minx), np.min(gdf.geometry.bounds.miny),
-                    (np.max(gdf.geometry.bounds.maxx) - np.min(gdf.geometry.bounds.minx)) / gdf['col_index'].max(),
-                    (np.max(gdf.geometry.bounds.maxy) - np.min(gdf.geometry.bounds.miny)) / gdf['row_index'].max())
+    return graph
 
-def grid_to_map(col, row, transform, y_center=None):
-    x_origin, y_origin, pixel_width, pixel_height = transform
-    x_map = x_origin + col * pixel_width
-    y_map = y_origin + row * pixel_height
+def dijkstra(graph, source, target):
+    pq = [] # 우선순위 큐
+    heapq.heappush(pq, (0, source)) # (거리, 노드) 저장
+    distances = {node: float('inf') for node in graph} # 초기 모든 노드 거리 무한대
+    distances[source] = 0 
+    prev_nodes = {node: None for node in graph} # 이전 노드 추적
 
-     # 중심축 기준으로 Y좌표 반전
-    if y_center is not None:
-        y_map = y_center - (y_map - y_center)
+    while pq:
+        current_distance, current_node = heapq.heappop(pq) # 가장 짧은 거리 노드 꺼냄
 
-    return (x_map, y_map)
+        if current_node == target:
+            break
 
-# 시각화 전에 중심축 계산
-y_min, y_max = gdf.total_bounds[1], gdf.total_bounds[3]  # GeoDataFrame의 Y축 최소/최대 값
-y_center = (y_min + y_max) / 2  # 중심축 계산
+        for neighbor, weight in graph[current_node]:
+            distance = current_distance + weight
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance # 거리 업데이트
+                prev_nodes[neighbor] = current_node # (떠나온) 이전 노드 업데이트
+                heapq.heappush(pq, (distance, neighbor))
 
-# 지형과 건물 
+        # 경로 추적
+        path = []
+        current = target
+        while current is not None:
+            path.append(current)
+            current = prev_nodes[current]
+        path.reverse()
+    return path, distances[target]
+
+# 그래프 생성
+graph = build_graph(merged_edges_dict, flooded_filtered_dem_grid)
+
+# 임의 설정
+source_node = '32'
+target_node = '141'
+
+shortest_path, final_weight = dijkstra(graph, source_node, target_node)
+
+print("최단 경로: ", shortest_path)
+print("최종 가중치: ", final_weight)
+
+# # 시각화
+# 출발노드, 도착노드 GeoDataFrame로 변환
+path_gdf = nodes[nodes['node_id'].isin(shortest_path)] # 경로 GeoDataFrame
+start_node = shortest_path[0]
+end_node = shortest_path[-1]
+start_end_nodes = path_gdf[path_gdf['node_id'].isin([start_node, end_node])]
+
+# 최종 경로 라인
+final_edges_gdf = edges[
+    (edges['node_1'].isin(shortest_path)) & (edges['node_2'].isin(shortest_path))
+]
+
+# 지형, 건물 
 terrain = geo_data[geo_data['type'] == '지형']
 buildings = geo_data[geo_data['type'] == '건물']
+# 침수 지도 좌표계 확인
 
-# 시각화
 fig, ax = plt.subplots(figsize=(10, 10))
-# geo_data.plot(ax=ax, color='lightgrey')
-# gdf.plot(ax=ax, color='none', edgecolor='black')
 
 terrain.plot(ax=plt.gca(), color='lightgray', edgecolor='darkgray')
 buildings.plot(ax=plt.gca(), color='lightgray', edgecolor='darkgray')
 
-# 변환된 경로 그리기
-path_coords = [grid_to_map(*G.nodes[node]['pos'], affine_transform, y_center) for node in path]
-x_coords, y_coords = zip(*path_coords)
-plt.plot(x_coords, y_coords, color='red', linewidth=1, label='Dijkstra Path')
-# ax.set_ylim(ax.get_ylim()[::-1])
-# plt.gca().invert_yaxis()
+final_edges_gdf.plot(ax=ax, color='red', linewidth=2, label="Shortest Path Edges")
+# edges.plot(ax=ax, color='gray', linewidth=0.5)
+
+start_end_nodes.plot(ax=ax, color='red', markersize=30, label='Shortest Path')
+
+# nodes.plot(ax=ax, color='black', markersize=5)
+
+plt.legend()
 plt.show()
+
+
+
+
+
+
+
+
+
+
+# G = nx.Graph()
+
+# # 격자 설정
+# grid_size = 64  # 격자 행과 열의 개수 (64x64)
+# bounds = dem_grid.total_bounds  # (min_x, min_y, max_x, max_y)
+# min_x, min_y, max_x, max_y = bounds
+
+# # 격자 셀 크기 계산 (지도 범위를 64x64로 나눔)
+# cell_width = (max_x - min_x) / grid_size
+# cell_height = (max_y - min_y) / grid_size
+
+# # 격자 좌표 계산 함수
+# def map_to_grid(x, y, min_x, min_y, cell_width, cell_height):
+#     grid_x = int((x - min_x) // cell_width)  # 격자 x 좌표
+#     grid_y = int((y - min_y) // cell_height)  # 격자 y 좌표
+#     return grid_x, grid_y
+
+# for _, row in nodes.iterrows():
+#     node_id = row["node_id"]
+#     current_x = row.geometry.x
+#     current_y = row.geometry.y
+#     current_col, current_row = map_to_grid(current_x, current_y, min_x, min_y, cell_width, cell_height)
