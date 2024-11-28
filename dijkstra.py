@@ -192,35 +192,3 @@ start_end_nodes.plot(ax=ax, color='red', markersize=30, label='Shortest Path')
 
 plt.legend()
 plt.show()
-
-
-
-
-
-
-
-
-
-
-# G = nx.Graph()
-
-# # 격자 설정
-# grid_size = 64  # 격자 행과 열의 개수 (64x64)
-# bounds = dem_grid.total_bounds  # (min_x, min_y, max_x, max_y)
-# min_x, min_y, max_x, max_y = bounds
-
-# # 격자 셀 크기 계산 (지도 범위를 64x64로 나눔)
-# cell_width = (max_x - min_x) / grid_size
-# cell_height = (max_y - min_y) / grid_size
-
-# # 격자 좌표 계산 함수
-# def map_to_grid(x, y, min_x, min_y, cell_width, cell_height):
-#     grid_x = int((x - min_x) // cell_width)  # 격자 x 좌표
-#     grid_y = int((y - min_y) // cell_height)  # 격자 y 좌표
-#     return grid_x, grid_y
-
-# for _, row in nodes.iterrows():
-#     node_id = row["node_id"]
-#     current_x = row.geometry.x
-#     current_y = row.geometry.y
-#     current_col, current_row = map_to_grid(current_x, current_y, min_x, min_y, cell_width, cell_height)
